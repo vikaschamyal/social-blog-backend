@@ -63,13 +63,13 @@ app.use("/api/comments", comments);
 app.use("/api/messages", messages);
 
 // ✅ Serve static files if in production (Vercel or Render frontend)
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "/client/build")));
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(__dirname, "/client/build")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client/build", "index.html"));
-  });
-}
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(__dirname, "client/build", "index.html"));
+//   });
+// }
 
 // ✅ Start server (Render requires dynamic port from process.env.PORT)
 const PORT = process.env.PORT || 4000;
