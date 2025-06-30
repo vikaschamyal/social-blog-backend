@@ -16,7 +16,7 @@
 ## Installation and usage
 1) Clone this repository  
 ```
-git clone https://github.com/ihtasham42/social-media-app.git
+
 ```
 2) Install dependencies  
 ```
