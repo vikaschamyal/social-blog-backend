@@ -37,11 +37,18 @@ io.use(authSocket);
 io.on("connection", (socket) => socketServer(socket));
 
 // ✅ MongoDB connection
-mongoose.connect(
-  process.env.MONGO_URI,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  () => console.log("✅ MongoDB connected")
-);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000,
+})
+.then(() => {
+  console.log("✅ MongoDB connection confirmed by Mongoose");
+})
+.catch((err) => {
+  console.error("❌ Mongoose connection failed:", err.message);
+});
+
 
 // ✅ Health check route
 app.get("/api/health", (req, res) => {
