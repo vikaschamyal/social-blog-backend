@@ -12,9 +12,7 @@ const httpServer = http.createServer(app);
 
 // ✅ Allowed frontend origins (local + vercel)
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://social-blog-app-cjxl.vercel.app",
-  "https://chatlog-nine.vercel.app"
+  "https://chatlog-nine.vercel.app" // Vercel frontend
 ];
 
 // ✅ Enable CORS for Express
