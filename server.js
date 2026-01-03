@@ -5,15 +5,22 @@ const cors = require("cors");
 const path = require("path");
 const http = require("http");
 
+
+
 dotenv.config();
 
 const app = express();
 const httpServer = http.createServer(app);
 
-// ✅ Allowed frontend origins (local + vercel)
+// ✅ Allowed frontend origins
 const allowedOrigins = [
-  "https://chatlog-nine.vercel.app" // Vercel frontend
+  "https://chatlog-nine.vercel.app", // Production (Vercel frontend)
 ];
+
+// In development, also allow CRA (localhost:3000)
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:3000");
+}
 
 // ✅ Enable CORS for Express
 app.use(cors({
@@ -42,41 +49,40 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 10000,
 })
-.then(() => {
-  console.log("✅ MongoDB connection confirmed by Mongoose");
-})
-.catch((err) => {
-  console.error("❌ Mongoose connection failed:", err.message);
-});
+.then(() => console.log("✅ MongoDB connected"))
+.catch((err) => console.error("❌ MongoDB connection failed:", err.message));
 
 
-// ✅ Health check route
 app.get("/api/health", (req, res) => {
   res.send("✅ Backend is running!");
 });
 
-// ✅ API Routes
+
 const posts = require("./routes/posts");
 const users = require("./routes/users");
 const comments = require("./routes/comments");
 const messages = require("./routes/messages");
+
+const journals = require("./routes/journals");///journals feature
 
 app.use("/api/posts", posts);
 app.use("/api/users", users);
 app.use("/api/comments", comments);
 app.use("/api/messages", messages);
 
-// ✅ Serve static files in production (Render)
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "/client/build")));
+app.use("/api/journals", journals);//use journals
 
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "client/build", "index.html"));
-//   });
-// }
 
-// ✅ Start server
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "/client/build")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client/build", "index.html"));
+  });
+}
+
+
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
+
