@@ -46,3 +46,5 @@ cd social-media-app
 cd client
 npm start
 \
+
+////push 
