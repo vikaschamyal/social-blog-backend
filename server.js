@@ -2,83 +2,95 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const path = require("path");
 const http = require("http");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
 const app = express();
-const httpServer = http.createServer(app);
+const server = http.createServer(app);
 
-// Allowed frontend origins (local + vercel)
+/* ===========================
+   ALLOWED ORIGINS
+=========================== */
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://chatlog-nine.vercel.app" // Vercel frontend
+  "https://flowlinemessanger.netlify.app",
 ];
 
-// Enable CORS for Express
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
-
-
+/* ===========================
+   EXPRESS MIDDLEWARE
+=========================== */
 app.use(express.json());
 
-// ✅ Setup Socket.IO with proper CORS
+/* ===========================
+   EXPRESS CORS (FIXED)
+=========================== */
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server, health checks, curl, etc.
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.error("❌ CORS blocked origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+/* ===========================
+   SOCKET.IO (FIXED)
+=========================== */
 const { authSocket, socketServer } = require("./socketServer");
-const io = require("socket.io")(httpServer, {
+
+const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    credentials: true,
+  },
+  transports: ["websocket", "polling"], // IMPORTANT for Render
 });
 
 io.use(authSocket);
-io.on("connection", (socket) => socketServer(socket));
+io.on("connection", socketServer);
 
-// ✅ MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 10000,
-})
-.then(() => {
-  console.log("✅ MongoDB connection confirmed by Mongoose");
-})
-.catch((err) => {
-  console.error("❌ Mongoose connection failed:", err.message);
-});
+/* ===========================
+   MONGODB (CRITICAL FIX)
+=========================== */
+mongoose.set("strictQuery", false);
 
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err.message);
+  });
 
-// ✅ Health check route
+/* ===========================
+   ROUTES
+=========================== */
 app.get("/api/health", (req, res) => {
-  res.send("✅ Backend is running!");
+  res.json({ status: "OK" });
 });
 
-// ✅ API Routes
-const posts = require("./routes/posts");
-const users = require("./routes/users");
-const comments = require("./routes/comments");
-const messages = require("./routes/messages");
+app.use("/api/posts", require("./routes/posts"));
+app.use("/api/users", require("./routes/users"));
+app.use("/api/comments", require("./routes/comments"));
+app.use("/api/messages", require("./routes/messages"));
 
-app.use("/api/posts", posts);
-app.use("/api/users", users);
-app.use("/api/comments", comments);
-app.use("/api/messages", messages);
-
-// ✅ Serve static files in production (Render)
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "/client/build")));
-
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "client/build", "index.html"));
-//   });
-// }
-
-// ✅ Start server
-const PORT = process.env.PORT || 4000;
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+/* ===========================
+   START SERVER
+=========================== */
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
