@@ -2,17 +2,19 @@ const jwt = require("jsonwebtoken");
 let users = [];
 
 const authSocket = (socket, next) => {
-  let token = socket.handshake.auth.token;
+  const token = socket.handshake.auth?.token;
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-      socket.decoded = decoded;
-      next();
-    } catch (err) {
-      next(new Error("Authentication error"));
-    }
-  } else {
+  if (!token) {
+    console.log("❌ Socket auth failed: No token");
+    return next(new Error("Authentication error"));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.TOKEN_KEY);
+    socket.decoded = decoded;
+    next();
+  } catch (err) {
+    console.log("❌ Socket auth failed: Invalid token");
     next(new Error("Authentication error"));
   }
 };
