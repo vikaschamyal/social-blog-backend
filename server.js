@@ -29,7 +29,6 @@ app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server, health checks, curl, etc.
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -41,9 +40,16 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-access-token",
+    ],
   })
 );
+
+app.options("*", cors());
+
 
 /* ===========================
    SOCKET.IO (FIXED)

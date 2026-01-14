@@ -26,7 +26,7 @@ const authSocket = (socket, next) => {
 const socketServer = (socket) => {
   // 🔒 If not authenticated, block messaging only
   if (!socket.decoded) {
-    console.log("⚠️ Anonymous socket connected:", socket.id);
+    console.log("⚠️ Anonymous` socket connected:", socket.id);
     return;
   }
 
